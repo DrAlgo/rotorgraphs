@@ -15,5 +15,7 @@ Utilise la bibliothèque NetworkX
 * en plus de cette classe, chaque sommet doit avoir un attribut booléen 'sink'
 * Une configuration de rotor est un dictionnaire {sommet : indice} donnant l'indice de l'arc dans la liste des voisins sortants
 * Une configuration particle/antiparticle est un dictionnaire {sommet : int}
+
+
   
 
