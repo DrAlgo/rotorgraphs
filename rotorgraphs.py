@@ -2,8 +2,15 @@ import networkx as nx
 import copy
 
 
+#type Aliases
+RotorGraph = nx.MultiDiGraph
+RotorConfig = {int:int}
+Vertex = int | str
 
-def graphToMultiDigraph(g):
+#useful functions
+identity = lambda x:x
+
+def graphToMultiDigraph(g:nx.Graph) -> nx.MultiDiGraph:
     """
     takes an undirected graph and returns a multi directed graph
     with two arcs for each previous edge
@@ -22,21 +29,31 @@ def graphToMultiDigraph(g):
 
 """
 this is intended to work with nx.MultiDiGraph
-A rotor configuration is a dict {node:edge}
+A rotor configuration is a dict {node:index}
 the rotor order on a node a is the order in the dict g[a]
 
 each node should contain a property "sink" set to True of False
 """
 
+def turn(g:RotorGraph, v:Vertex, rho:RotorConfig, k=1) -> None:
+    """
+    turns configuration rho at vertex x in graph g by quantity k
+    """
+    rho[v] = (rho[v] + k ) % g.degree(v)
+
+def move(g:RotorGraph, v:Vertex, rho:RotorConfig, k=1) -> None:
+    """
+    moves k chips along arc rho[v]
+    """
 
 
-def standard_rotor_config(g):
+def standard_rotor_config(g, with_sinks=False):
     """returns a rotor configuration
     with the first stored arc for every vertex"""
-    return {v : next(iter(g.neighbors(v))) for v in h.nodes }
+    return {v : 0 for v in g.nodes if g.degree(v) > 0 and g.nodes[v]['sink']==with_sinks}
 
 def non_sink_nodes(g):
-    return (v for v in g.nodes(data=True) if v['sink']==False)
+    return (v for v in g.nodes(data=True) if g.nodes[v]['sink']==False)
 
 def standard_binary_path(n):
     """
@@ -58,5 +75,6 @@ def sbp_configuration(descr):
     conf = {}
     for i in range(1, len(descr)):
         pass
+
 
 
