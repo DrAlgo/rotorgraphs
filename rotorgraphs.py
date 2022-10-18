@@ -2,19 +2,23 @@ import networkx as nx
 import copy
 
 
-#type Aliases
-RotorGraph = nx.MultiDiGraph
-RotorConfig = {int:int}
-Vertex = int | str
-
 #useful functions
 identity = lambda x:x
 
-def graphToMultiDigraph(g:nx.Graph) -> nx.MultiDiGraph:
+def graphToMultiDigraph(g):
     """
     takes an undirected graph and returns a multi directed graph
     with two arcs for each previous edge
-    """
+
+    Args:
+        g (nx.Graph): standard undirected graph
+
+    Returns:
+        nx.MultiDigraph: corresponding multi digraph
+    """    
+
+
+
     res = nx.MultiDiGraph()
     res.add_nodes_from(copy.deepcopy(g.nodes))
 
@@ -35,16 +39,61 @@ the rotor order on a node a is the order in the dict g[a]
 each node should contain a property "sink" set to True of False
 """
 
-def turn(g:RotorGraph, v:Vertex, rho:RotorConfig, k=1) -> None:
-    """
-    turns configuration rho at vertex x in graph g by quantity k
-    """
-    rho[v] = (rho[v] + k ) % g.degree(v)
+def turn(g, v, rho, k=1):
+    """turns configuration rho at vertex v in graph g by quantity k
 
-def move(g:RotorGraph, v:Vertex, rho:RotorConfig, k=1) -> None:
+    Args:
+        g (nx.MultiDigraph): base rotorgraph
+        v (hashable): vertex
+        rho (dict(node:int)): rotor configuration
+        k (int, optional): _description_. Defaults to 1.
     """
-    moves k chips along arc rho[v]
+    rho[v] = (rho[v] + k ) % g.out_degree(v)
+
+def move(sigma, arc, k=1) -> None:
+    """moves k chips along given arc  in g in chips config sigma
+
+    Args:
+        sigma (dict(node:int)):chips config
+        a (tuple(node,node,int)): arc
+        k (int, optional): quantity moved. Defaults to 1.
     """
+    sigma[arc[0]] -= k
+    sigma[arc[1]] += k
+    
+def single_rotor_step(g, sigma, rho, v, direction):
+    """_summary_
+
+    Args:
+        g (_type_): _description_
+        sigma (_type_): _description_
+        rho (_type_): _description_
+        v (_type_): _description_
+        direction (int): +1 for a particle or -1 for an antiparticle
+
+    Returns:
+        hashable : new position of the routed particle / antiparticle
+    """  
+
+    if direction == +1:
+        a = list(g.edges(v))[rho[v]]
+        move(sigma, a)
+        turn(g, v, rho, 1)
+        
+    elif direction == -1:
+        turn(g, v, rho, -1)
+        a = list(g.edges(v))[rho[v]]
+        move(sigma, a)
+    return a[1]
+
+def rout_single_particle(g, rho, v_start, direction = +1):
+    
+    sigma = {w:0 for w in g.nodes} #not really used here
+    sigma[v_start] = 1
+
+    v_current = v_start
+    while g.nodes[v_current]['sink'] == False:
+        v_current = single_rotor_step(g, sigma, rho, v_current, direction)
 
 
 def standard_rotor_config(g, with_sinks=False):
@@ -55,26 +104,7 @@ def standard_rotor_config(g, with_sinks=False):
 def non_sink_nodes(g):
     return (v for v in g.nodes(data=True) if g.nodes[v]['sink']==False)
 
-def standard_binary_path(n):
-    """
-    returns the standard binary path rotor graph on n non_sink vertices 1, 2, ..., n
-    0 and n+1 are sinks
-    """ 
-    g = graphToMultiDigraph(nx.path_graph(n+2))
-    #remove arc 0->1 and n+1->n ?
-    g.nodes[0]['sink'] = True
-    g.nodes[n+1]['sink'] = True
-    return g
 
-def sbp_configuration(descr):
-    """
-    returns the configuration corresponding to the description
-    in the len(descr) standard binary path 
-    descr is a sequence of either 'L' and 'R' or -1/1 or 0/1
-    """
-    conf = {}
-    for i in range(1, len(descr)):
-        pass
 
 
 
