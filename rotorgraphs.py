@@ -72,7 +72,7 @@ def single_rotor_step(g, sigma, rho, v, direction):
         direction (int): +1 for a particle or -1 for an antiparticle
 
     Returns:
-        hashable : new position of the routed particle / antiparticle
+        tuple : the arc that is crossed by the particle / antiparticle
     """  
 
     if direction == +1:
@@ -84,16 +84,41 @@ def single_rotor_step(g, sigma, rho, v, direction):
         turn(g, v, rho, -1)
         a = list(g.edges(v))[rho[v]]
         move(sigma, a)
-    return a[1]
+    return a
 
 def rout_single_particle(g, rho, v_start, direction = +1):
+    """routs the particle until it reaches a sink
+    returns the flow
+
+    Args:
+        k (int, optional): _description_. Defaults to 1.
+        g (nx.MultiDigraph): base rotorgraph
+        rho (dict(node:int)): rotor configuration
+        v_start (hashable): vertex
+        direction (int, optional): +1 for particle, -1 for antiparticle. Defaults to +1.
+
+    Returns:
+        dict(arc:int) : flow of the run ; only non-zero arcs
+    """    
     
     sigma = {w:0 for w in g.nodes} #not really used here
     sigma[v_start] = 1
 
+    flow = {}
+
     v_current = v_start
     while g.nodes[v_current]['sink'] == False:
-        v_current = single_rotor_step(g, sigma, rho, v_current, direction)
+        arc = single_rotor_step(g, sigma, rho, v_current, direction)
+
+        #update of the current position of the (anti/)particle
+        v_current = arc[1]
+
+        #update of flow
+        if arc not in flow:
+            flow[arc] = 0
+        flow[arc] += direction
+
+    return flow
 
 
 def standard_rotor_config(g, with_sinks=False):
